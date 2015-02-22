@@ -22,7 +22,7 @@ type Expectation struct {
 
 func (e *Expectation) ToBe(expected interface{}) {
 	if expected != e.actual {
-		e.t.Logf("%s: expected %s to be %s", e.name, expected, e.actual)
+		e.t.Logf("%s: expected %s to be %s", e.name, e.actual, expected)
 		e.t.Fail()
 	}
 }
