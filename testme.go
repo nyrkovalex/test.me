@@ -27,6 +27,17 @@ func (e *Expectation) ToBe(expected interface{}) {
 	}
 }
 
+func (e *Expectation) ToPanic(expected interface{}) {
+	defer func() {
+		expect := &Expect{e.t, e.name}
+		err := recover()
+		expect.Expect(err).ToBe(expected)
+	}()
+	reflect.ValueOf(e.actual).Call([]reflect.Value{})
+	e.t.Logf("%s: expected %s to panic with %s", e.name, e.actual, expected)
+	e.t.Fail()
+}
+
 func Run(t *testing.T, suite interface{}) {
 	suiteType := reflect.TypeOf(suite)
 	for i := 0; i < suiteType.NumMethod(); i++ {
