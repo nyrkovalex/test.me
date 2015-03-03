@@ -18,6 +18,10 @@ func (m MyTest) TestShouldPanic(e *Expect) {
 	}).ToPanic("foo")
 }
 
+func (m MyTest) TestShouldLogTheMessage(e *Expect) {
+	e.Log("test %d", 1)
+}
+
 func TestSetUp(t *testing.T) {
 	Run(t, MyTest{})
 }

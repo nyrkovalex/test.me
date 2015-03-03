@@ -10,8 +10,12 @@ type Expect struct {
 	name string
 }
 
-func (t *Expect) Expect(actual interface{}) *Expectation {
-	return &Expectation{t.t, t.name, actual}
+func (e *Expect) Expect(actual interface{}) *Expectation {
+	return &Expectation{e.t, e.name, actual}
+}
+
+func (e *Expect) Log(msg string, args ...interface{}) {
+	e.t.Logf(msg, args...)
 }
 
 type Expectation struct {
