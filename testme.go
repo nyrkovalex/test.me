@@ -22,7 +22,7 @@ type Expectation struct {
 
 func (e *Expectation) ToBe(expected interface{}) {
 	if expected != e.actual {
-		e.t.Logf("%s: expected %s to be %s", e.name, e.actual, expected)
+		e.t.Logf("%s: expected %v to be %v", e.name, e.actual, expected)
 		e.t.Fail()
 	}
 }
@@ -34,7 +34,7 @@ func (e *Expectation) ToPanic(expected interface{}) {
 		expect.Expect(err).ToBe(expected)
 	}()
 	reflect.ValueOf(e.actual).Call([]reflect.Value{})
-	e.t.Logf("%s: expected %s to panic with %s", e.name, e.actual, expected)
+	e.t.Logf("%s: expected %v to panic with %v", e.name, e.actual, expected)
 	e.t.Fail()
 }
 
