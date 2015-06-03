@@ -31,6 +31,13 @@ func (e *Expectation) ToBe(expected interface{}) {
 	}
 }
 
+func (e *Expectation) NotToBe(expected interface{}) {
+	if expected == e.actual {
+		e.t.Logf("%s: expected %v not to be %v", e.name, e.actual, expected)
+		e.t.Fail()
+	}
+}
+
 func (e *Expectation) ToPanic(expected interface{}) {
 	defer func() {
 		expect := &Expect{e.t, e.name}
