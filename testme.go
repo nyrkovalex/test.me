@@ -5,17 +5,15 @@ import (
 	"testing"
 )
 
-type Expect struct {
+type Expect func(actual interface{}) *Expectation
+
+type tester struct {
 	t    *testing.T
 	name string
 }
 
-func (e *Expect) Expect(actual interface{}) *Expectation {
+func (e *tester) Expect(actual interface{}) *Expectation {
 	return &Expectation{e.t, e.name, actual}
-}
-
-func (e *Expect) Log(msg string, args ...interface{}) {
-	e.t.Logf(msg, args...)
 }
 
 type Expectation struct {
@@ -40,7 +38,7 @@ func (e *Expectation) NotToBe(expected interface{}) {
 
 func (e *Expectation) ToPanic(expected interface{}) {
 	defer func() {
-		expect := &Expect{e.t, e.name}
+		expect := &tester{e.t, e.name}
 		err := recover()
 		expect.Expect(err).ToBe(expected)
 	}()
@@ -53,10 +51,10 @@ func Run(t *testing.T, suite interface{}) {
 	suiteType := reflect.TypeOf(suite)
 	for i := 0; i < suiteType.NumMethod(); i++ {
 		method := suiteType.Method(i)
-		expect := &Expect{t, method.Name}
+		injectable := &tester{t, method.Name}
 		method.Func.Call([]reflect.Value{
 			reflect.ValueOf(suite),
-			reflect.ValueOf(expect),
+			reflect.ValueOf(injectable.Expect),
 		})
 	}
 }

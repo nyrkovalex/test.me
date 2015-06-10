@@ -17,15 +17,21 @@ import (
 type MyTest struct{}
 
 func TestSetUp(t *testing.T) {
-	Run(t, MyTest{}) // Hook up to the go testing library
+	Run(t, MyTest{})
 }
 
-func (m MyTest) TestShouldPass(e *Expect) {
-    e.Expect(1).ToBe(1)
+func (m MyTest) TestShouldPass(expect Expect) {
+	expect(1).ToBe(1)
 }
 
-func (m MyTest) TestShouldFail(e *Expect) {
-    e.Expect("foo").ToBe("bar")
+func (m MyTest) TestShouldNotFail(expect Expect) {
+	expect(1).NotToBe(2)
+}
+
+func (m MyTest) TestShouldPanic(expect Expect) {
+	expect(func() {
+		panic("foo")
+	}).ToPanic("foo")
 }
 
 ```
