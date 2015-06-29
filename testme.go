@@ -3,9 +3,14 @@
 package testme
 
 import (
+	"os"
 	"reflect"
+	"runtime"
+	"strings"
 	"testing"
 )
+
+const libraryName = "testme.go"
 
 // E function wraps standard testing type T with expect assertions
 func E(t *testing.T) Expecter {
@@ -46,8 +51,34 @@ type expectation struct {
 	actual interface{}
 }
 
+func firstExternalFileLine() (file string, line int) {
+	pc := make([]uintptr, 5)
+	written := runtime.Callers(1, pc)
+	for i := 0; i < written; i++ {
+		current := pc[i] - 1
+		fn := runtime.FuncForPC(current)
+		file, line = fn.FileLine(current)
+		if strings.LastIndex(file, libraryName) == -1 {
+			return
+		}
+	}
+	return
+}
+
+func fileLine() (file string, line int) {
+	file, line = firstExternalFileLine()
+	splitted := strings.Split(file, string(os.PathSeparator))
+	file = splitted[len(splitted)-1]
+	return
+}
+
+func (e *expectation) logError(condition string, expected interface{}, file string, line int) {
+	e.t.Errorf("\n> %s:%d: Expected %v "+condition+" %v", file, line, e.actual, expected)
+}
+
 func (e *expectation) fail(condition string, expected interface{}) {
-	e.t.Errorf("Expected %v "+condition+" %v", e.actual, expected)
+	file, line := fileLine()
+	e.logError(condition, expected, file, line)
 }
 
 func (e *expectation) Expect(actual interface{}) *expectation {
@@ -68,10 +99,12 @@ func (e *expectation) NotToBe(expected interface{}) {
 }
 
 func (e *expectation) ToPanic(expected interface{}) {
+	file, line := fileLine()
 	defer func() {
-		expect := &tester{e.t}
 		err := recover()
-		expect.Expect(err).ToBe(expected)
+		if err != e.actual {
+			e.logError("to panic with", expected, file, line)
+		}
 	}()
 	reflect.ValueOf(e.actual).Call([]reflect.Value{})
 	e.fail("to panic with", expected)
