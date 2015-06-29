@@ -1,3 +1,5 @@
+// Package testme provides simple expect-style assertioin by wrapping standard
+// *testing.T type with E(*t) function
 package testme
 
 import (
