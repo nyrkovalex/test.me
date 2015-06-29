@@ -10,7 +10,7 @@ Usage is very simple, just do
 package main
 
 import (
-	. "github.com/nyrkovalex/testme"
+	. "gopkg.in/nyrkovalex/testme.v1"
 	"testing"
 )
 
