@@ -14,22 +14,16 @@ import (
 	"testing"
 )
 
-type MyTest struct{}
-
-func TestSetUp(t *testing.T) {
-	Run(t, MyTest{})
+func TestShouldPass(t *testing.T) {
+	E(t).Expect(1).ToBe(1)
 }
 
-func (m MyTest) TestShouldPass(expect Expect) {
-	expect(1).ToBe(1)
+func TestShouldNotFail(t *testing.T) {
+	E(t).Expect(1).NotToBe(2)
 }
 
-func (m MyTest) TestShouldNotFail(expect Expect) {
-	expect(1).NotToBe(2)
-}
-
-func (m MyTest) TestShouldPanic(expect Expect) {
-	expect(func() {
+func TestShouldPanic(t *testing.T) {
+	E(t).Expect(func() {
 		panic("foo")
 	}).ToPanic("foo")
 }

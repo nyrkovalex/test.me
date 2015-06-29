@@ -5,56 +5,72 @@ import (
 	"testing"
 )
 
-type Expect func(actual interface{}) *Expectation
+// E function wraps standard testing type T with expect assertions
+func E(t *testing.T) Expecter {
+	return &tester{t}
+}
+
+// Expecter interface serves as a starting point for expect assertions
+type Expecter interface {
+	// Expect accpets actual value to be compared or tested against
+	// expected value passed to Expecation methods
+	Expect(actual interface{}) Expectation
+}
+
+// Expectation interface provides assertion methods
+type Expectation interface {
+	// ToBe performs simple comparison of an actual value passed to Expecter and
+	// expected value provided
+	ToBe(expected interface{})
+
+	// NotToBe performs negated comparison similar to ToBe
+	NotToBe(expected interface{})
+
+	// ToPanic checks if a function wrapped with Expect panics with an argument
+	// provided
+	ToPanic(expected interface{})
+}
 
 type tester struct {
-	t    *testing.T
-	name string
+	t *testing.T
 }
 
-func (e *tester) Expect(actual interface{}) *Expectation {
-	return &Expectation{e.t, e.name, actual}
+func (t *tester) Expect(actual interface{}) Expectation {
+	return &expectation{t.t, actual}
 }
 
-type Expectation struct {
+type expectation struct {
 	t      *testing.T
-	name   string
 	actual interface{}
 }
 
-func (e *Expectation) ToBe(expected interface{}) {
+func (e *expectation) fail(condition string, expected interface{}) {
+	e.t.Errorf("Expected %v "+condition+" %v", e.actual, expected)
+}
+
+func (e *expectation) Expect(actual interface{}) *expectation {
+	e.actual = actual
+	return e
+}
+
+func (e *expectation) ToBe(expected interface{}) {
 	if expected != e.actual {
-		e.t.Logf("%s: expected %v to be %v", e.name, e.actual, expected)
-		e.t.Fail()
+		e.fail("to be", expected)
 	}
 }
 
-func (e *Expectation) NotToBe(expected interface{}) {
+func (e *expectation) NotToBe(expected interface{}) {
 	if expected == e.actual {
-		e.t.Logf("%s: expected %v not to be %v", e.name, e.actual, expected)
-		e.t.Fail()
+		e.fail("not to be", expected)
 	}
 }
 
-func (e *Expectation) ToPanic(expected interface{}) {
+func (e *expectation) ToPanic(expected interface{}) {
 	defer func() {
-		expect := &tester{e.t, e.name}
+		expect := &tester{e.t}
 		err := recover()
 		expect.Expect(err).ToBe(expected)
 	}()
 	reflect.ValueOf(e.actual).Call([]reflect.Value{})
-	e.t.Logf("%s: expected %v to panic with %v", e.name, e.actual, expected)
-	e.t.Fail()
-}
-
-func Run(t *testing.T, suite interface{}) {
-	suiteType := reflect.TypeOf(suite)
-	for i := 0; i < suiteType.NumMethod(); i++ {
-		method := suiteType.Method(i)
-		injectable := &tester{t, method.Name}
-		method.Func.Call([]reflect.Value{
-			reflect.ValueOf(suite),
-			reflect.ValueOf(injectable.Expect),
-		})
-	}
+	e.fail("to panic with", expected)
 }
